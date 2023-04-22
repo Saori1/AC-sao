@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.19
+# v0.19.22
 
 using Markdown
 using InteractiveUtils
@@ -22,85 +22,113 @@ html"""
 # ╔═╡ 59aabf72-b698-11ec-02c5-71c3f7918cd2
 md"""# Visualización de datos con _Plots_
 
-En este _notebook_ veremos varias funciones del paquete _Plots_ útiles para visualizar conjuntos de datos, tales como datos experimentales. Para empezar, por supuesto, debemos cargar el módulo:
+En este _notebook_ veremos varias funciones del paquete _Plots_ útiles para visualizar conjuntos de datos, tales como datos experimentales. Para empezar, por supuesto, debemos cargar el módulo `Plots`, junto con otro módulo que nos auxiliará para algunos ejemplos:
 
 """
 
 # ╔═╡ 6c4b8ea6-f01f-48a1-b2ad-9d16d634de81
 md"""## Gráficas de puntos en dos dimensiones
 
-Hasta ahora, hemos utilizado la función `scatter` con la sintáxis `scatter(X,f.(X))`, donde `X` es un arreglo de puntos y `f`es una función, para graficar puntos de la forma $(x,f(x))$ para los valores $x$ del arreglo `X`. En realidad, lo que estamos haciendo es alimentarle a la función `scatter` dos arreglos: el de los puntos del dominio que queremos graficar `X`, y el de las imágenes de dichos puntos bajo la función `f.(X)`.
-
-Esto es porque, en general, si ejecutamos el comando `scatter(A1,A2)` con dos arreglos `A1` y `A2` en su argumento, esta función graficará todos los puntos con coordenadas `A1[i],A2[i]` para cada índice `ì` de las entradas de su primer argumento (en este caso, `A1`), ciclando sobre las entradas del arreglo en su segundo argumento de ser necesario: 
-
+En la sección **Gráficas bidimensionales** del _notebook_ anterior utilizamos la función `scatter` con la sintáxis `scatter(f,X)`, con `f` una función y `X` un arreglo, para generar a la gráfica de la función $f$ en $X$:
 
 """
 
+# ╔═╡ bfacad82-4607-4b5a-a814-d26d6c9a6190
+scatter(sin,0:2π,legend=false) #Tabula "sin" en el rango 0:2π sin leyenda en la figura
+
+# ╔═╡ f38b4026-54da-4929-b86a-77381dc5d1ba
+md"
+Recordemos que la gráfica de una función $f$ con dominio $X$ no es más que el conjunto de pares ordenados
+
+$$\{(x,f(x)) \mid x\in X\}.$$
+
+Existe una forma alternativa de usar la función `scatter` más parecida a esta definición: `scatter(X,f.(X))`. Reescribiendo la celda de código anterior de esta forma, tenemos:
+
+"
+
+# ╔═╡ 213565e7-70d3-45ce-bd33-dbb8113a7ae6
+scatter(0:2π,sin.(0:2π),legend=false) #Tabula "sin" en el rango 0:2π sin leyenda en la figura
+
+# ╔═╡ 2be154bf-949f-4a79-b387-ec45452f98aa
+md"
+Esto se debe a que, al ejecutar el comando `scatter(A,B)` con dos arreglos `A` y `B`, sucede lo siguiente:
+1. Julia crea una gráfica bidimensional.
+1. Para cada entrada `i` de los arreglos, Julia grafica un punto con coordenadas (`A[i]`, `B[i]`).
+1. Si el arreglo en el primer argumento tiene más entradas que el arreglo en el segundo argumento, Julia ciclará sobre los elementos del segundo (es decir, empezará desde el principio) hasta haber utilizado todas las entradas del primero.
+
+Esto se puede observar comparando las dos gráficas que aparecen a continuación.
+"
+
 # ╔═╡ 388c5f8f-0bc8-4897-a312-7243000e2392
 begin
-    X = [1, 2, 3]
-    Y = [1, 2, 3, 4, 5, 6]
+    X = [1, 2, 3]          #Definimos arreglos con los
+    Y = [1, 2, 3, 4, 5, 6] #cuales graficaremos puntos.
 end
 
 # ╔═╡ 512964ef-af35-476b-8199-e9c9037ca419
 scatter(X,Y)
+#=En esta gráfica se grafican los pares
+  ordenados (1,1), (2,2) y (3,3)...=#
 
 # ╔═╡ c5948633-4440-4c1e-9771-8e3a0ae7717f
 scatter(Y,X)
-#= Mientras que aquí se grafican los puntos ([1],[1]),
-([2],[2]), ([3],[3]) =#
+#=...mientras que en ésta se grafican los pares ordenados
+  (1,1), (2,2), (3,3), (4,1), (5,2) y (6,3).=#
+
+# ╔═╡ f0380540-489a-4978-918d-d73166f65de9
+md"""
+Esto es muy similar a lo visto en la sección **Puntos en tres dimensiones con `scatter`** del _notebook_ anterior, con la excepción que, en el caso de puntos _en dos dimensiones_, los arreglos sí pueden tener distintas longitudes.
+
+"""
 
 # ╔═╡ b5d5ffd3-10d7-40be-976b-c4ea5ecf96a1
 md"""
 
 ### Barras de error
 
-Dado que toda medición experimental es inprecisa -al igual que la mayoría de los cálculos aritméticos realizados con números de punto flotante, como hemos visto anteriormente-, algo muy útil al graficar datos obtenidos de esta forma es utilizar barras de error horizontales y verticales.
+Dado que toda medición experimental es imprecisa -al igual que la mayoría de los cálculos aritméticos realizados con números de punto flotante, como vimos anteriormente- y, por lo tanto, tienen una **incertidumbre** asociada, algo muy útil al graficar datos obtenidos de esta forma es utilizar **barras de error** horizontales y verticales.
 
-En Julia, esto se logra con los atributos `xerror`y `yerror`, respectivamente, de la función `scatter`. A cualquiera de estos atributos se les puede asignar un arreglo `E` o un par de arreglos `(E1,E2)`. Si le asignamos un arreglo a `xerror` o `yerror`, entonces el $i$-ésimo valor de ese arreglo será utilizado para graficar el error absoluto del $i$-ésimo punto graficado _de forma simétrica_ en el eje horizontal o vertical, respectivamente. Por otro lado, si le asignamos a `xerror` un par de arreglos, el primer arreglo será utilizado para graficar los errores absolutos a la izquierda de cada punto, mientras que el segundo será utilizado para graficar los errores a la derecha. Similarmente, si le asignamos a `yerror`un par de arreglos, el primero determinará los errores debajo de cada punto y el segundo, los de arriba. Por ejemplo:
+En Julia, esto se logra con los atributos `xerror`y `yerror`, respectivamente. A cualquiera de estos atributos se les puede asignar un arreglo `E` o un par ordenado de arreglos `(E1,E2)`. Si le asignamos un arreglo a `xerror` o `yerror`, entonces el $i$-ésimo valor de ese arreglo será utilizado para graficar el error absoluto del $i$-ésimo punto graficado _de forma simétrica_ en el eje horizontal o vertical, respectivamente. Por otro lado, si le asignamos a `xerror` un par de arreglos, el primer arreglo será utilizado para graficar los errores absolutos a la izquierda de cada punto, mientras que el segundo será utilizado para graficar los errores a la derecha. Similarmente, si le asignamos a `yerror`un par de arreglos, el primero determinará los errores debajo de cada punto y el segundo, los de arriba. Por ejemplo:
 
 """
 
 # ╔═╡ cf834b28-119f-483b-8d2d-379b085c2d82
-scatter(X, [3,2,1], xerror = [0.1,0.1,0.3], yerror = ([0.5,0.4,0.35],[0.1,0.2,0.25]) )
-#= Nota que los errores en el eje horizontal son 
-   simétricos porque sólo le asignamos 
-   un arreglo a xerror, mientras que los errores en el 
-   eje vertical no son simétricos,
-   pues le asignamos un par de arreglos a yerror. =#
+scatter(X, [3,2,1], xerror = [0.1,0.1,0.3], yerror = ([0.5,0.3,0.35],[0.1,0.2,0.55]) )
+#=Nota que los errores en el eje horizontal son simétricos
+  porque sólo le asignamos un arreglo a 'xerror',
+  mientras que los errores en el eje vertical no son simétricos,
+  pues le asignamos un par de arreglos a 'yerror'.=#
 
 # ╔═╡ 59bd58b0-9852-4ace-8419-3b0a3eff8ab4
 md"""## Gráficas tipo _boxplot_
 
-Para hacer gráficas de tipo caja, podemos usar la función `boxplot`:
+Para hacer gráficas de tipo caja (o **_boxplot_**), que muestran una distrubución estadística basada en _cuartiles_ por cada categoría, podemos usar la función `boxplot`. Por ejemplo:
 
 """
 
 # ╔═╡ 2d11057d-1a23-471a-abfc-ff7146e640e4
-boxplot( repeat([1,2,3,4,5],outer=100), rand(500), legend=false )
-
-#= El primer arreglo está compuesto por 100 repeticiones 
-de 1,2,3,4,5, por lo que tiene 500 entradas. El segundo
-arreglo tiene 500 entradas de números aleatorios entre 0
-y 1. =#
+boxplot(repeat([1,2,3,4,5],outer=100), rand(500), legend=false)
+#= El primer arreglo está compuesto por 100 repeticiones de 1,2,3,4 y 5;
+   el segundo está compuesto de números aleatorios entre 0 y 1.
+   Ambos tienen 500 entradas.=#
 
 # ╔═╡ 77d49b14-e755-4c01-98df-516765dc6576
 md"""## Gráficas de barras
 
-Para hacer gráficas de barras, usamos la función `bar(A1,A2)`, donde `A1` es un arreglo que contiene las categorías de cada barra y `A2` es un arreglo con los valores de cada categoría:
+Para hacer **gráficas de barras**, usamos la función `bar(A,B)`, donde `A` es un arreglo que contiene las categorías correspondientes a cada barra y `B` es un arreglo con los valores de cada categoría. Por ejemplo:
 
 """
 
 # ╔═╡ 7f2e3c6f-d3cf-4ef7-a33b-a1f70e664744
-bar(["Categoría 1", "Categoría 2", "Categoría 3"],[4,5,6],fillcolor=[:red,:green,:blue],fillalpha=[0.2,0.4,0.6], legend=false)
-
-#= El valor alpha fija la opacidad de cada color, siendo
-   0 totalmente transparente y 1 totalmente opaco. =#
+bar(["Categoría 1", "Categoría 2", "Categoría 3"], [4,5,6],
+	fillcolor=[:red,:green,:blue], fillalpha=[0.2,0.5,0.5], legend=false)
+#=El "valor alpha" fija la opacidad de cada color, siendo
+  0 totalmente transparente y 1 totalmente opaco.=#
 
 # ╔═╡ da118da6-0282-44cc-bb02-99c8e3a2d83a
 md"""## Histogramas
 
-Para hacer un histograma, usamos la función `histogram(A)`, donde `A` es el arreglo de datos a partir del cual haremos el histograma:
+Para hacer un **histograma** -el cual, dado un arreglo de valores, representa la frecuencia con la que dichos valores caen dentro de ciertos intervalos- usamos la función `histogram(A)`, donde `A` es el arreglo para el cual queremos hacer el histograma. Por ejemplo:
 
 """
 
@@ -109,57 +137,55 @@ histogram([1,2,1,1,4,3,8], legend=false)
 
 # ╔═╡ 22e835b4-2ef7-435c-b1a6-494b6c2c8057
 md"""
-
-Los intervalos usados para categorizar los datos se generan de manera automática. Para fijar nuestros propios intervalos, podemos asignarle un arreglo con los límites de los intervalos al atributo `bins`:
+Al utilizar la función `histogram` de esta forma, los intervalos usados para categorizar los datos se generan automáticamente. Para fijar nuestros propios intervalos debemos utilizar el atributo `bins` (que significa "cajones" en inglés) y asignarle un arreglo o rango que contenga los límites de los intervalos que queremos para nuestro histograma. Por ejemplo:
 
 """
 
 # ╔═╡ 094abf25-8e17-4f40-837c-082e59b19512
-histogram([1,2,1,1,4,3,8], bins=0:9, legend=false)
-
-#= Aquí a 'bins' le asignamos el arreglo
-   [0,1,2,3,4,5,6,7,8,9], por lo que las categorías son
-   los intervalos [0,1), [1,2), ..., [8,9) (en notación
-   matemática).
-=#
+histogram([2.1, 2.2, 3, 4, 2, 5, 7, 5.5, 5.6], bins=0:9, legend=false)
+#=Aquí a 'bins' le asignamos el rango con enteros del 0 al 9,
+  por lo que las categorías (en notación matemática)
+  son los intervalos [0,1), [1,2), ..., [8,9).=#
 
 # ╔═╡ 85fd570b-a212-4f6e-9288-6d190209152e
 md"""## _Pie charts_
 
-Para hacer gráficas de pastel, utilizamos la función `pie(A1,A2)`, donde `A1` es un arreglo que contiene las categorías de cada "rebanada" y `A2` es un arreglo con los valores de frecuencia de categoría:
+Para hacer gráficas de pastel (o **_pie charts_**), utilizamos la función `pie(A,B)`, donde `A` es un arreglo que contiene las categorías de cada "rebanada" y `B` es un arreglo con los valores de _frecuencia_ de categoría. Por ejemplo:
 
 """
 
 # ╔═╡ 4d0558b2-f7b0-402f-899b-b07477083126
-pie(["Windows","Mac","GNU/Linux"],[18,2,4], title="Sistemas operativos utilizados en el grupo")
+pie(["Windows","Mac","GNU/Linux"], [18,2,4],
+	title="Sistemas operativos utilizados por el grupo (2022-II)")
+
+# ╔═╡ b2ad0cf1-4c57-4ea2-b970-03890b67275e
+pie(["Windows","Mac","GNU/Linux"], [27,3,1], 
+	title="Sistemas operativos utilizados por el grupo (2023-II)")
 
 # ╔═╡ 41cdba33-6d38-4c9a-ba36-31a929bf4e96
 md"""## Mapas de calor
 
-Para graficar mapas de calor, utilizamos la función `heatmap(M)`, donde `M` es una matriz:
+Para graficar **mapas de calor**, utilizamos la función `heatmap(M)`, donde `M` es una matriz. Como ejemplo, observemos las siguientes dos celdas de código:
 
 """
 
 # ╔═╡ e8dcb3aa-20bd-4d5f-be64-62e38a6a1fe2
-M = rand(10,10)
-#= Esto genera una matriz de 10x10 cuyas entradas tienen
-   un valor aleatorio entre 0 y 1. =#
+M = rand(8,8) #Generamos una matriz de 8x8 con entradas aleatorias entre 0 y 1.=#
 
 # ╔═╡ 6eefbe35-5e13-4818-9935-ac9882ba8fb9
-heatmap(M)
-# Graficamos la matriz como un mapa de calor
+heatmap(M) #Graficamos la matriz como un mapa de calor.
 
 # ╔═╡ 7a98df29-4c26-49dd-afa2-3a00080ba137
 md"""
 
-Ahora, observa el mapa de calor anterior. Si te fijas en la celda que está en el renglón marcado como $i$ y la columna marcada como $j$ en la figura notarás que, de acuerdo al mapa de colores a la derecha de la figura, el color que tiene esa celda corresponde al valor de la entrada $(i,j)$ de la matriz. Por lo tanto, _el mapa de calor es una representación de una matriz numérica que asigna un color a cada entrada de la matriz_. Retomaremos esta idea cuando hablemos de almacenamiento y manipulación de imágenes digitales.
+Notemos que, siguiendo la escala de color del lado derecho de la figura, el valor correspondiente al color de la celda que está en el renglón $i$ y la columna $j$ de la figura corresponde precisamente al valor de la entrada `[i,j]` de la matriz con la cual se genera el mapa de calor. En otras palabras, _el **mapa de calor** es una **representación de una matriz numérica** que **asigna un color a cada entrada numérica** de la matriz_. Retomaremos esta idea más adelante cuando hablemos sobre almacenamiento y manipulación de imágenes digitales.
 
 """
 
 # ╔═╡ 47ddeb2c-f122-4a22-939d-b4874779d452
 md"""## Subfiguras
 
-Si queremos crear una figura que tenga muchas subfiguras con gráficas diferentes, no sirve sólo usar las versiones modificadoras (con terminacióñ `!`) para cada función que grafica, pues obtendremos un montón de gráficas encimadas:
+Si queremos crear una figura que tenga muchas subfiguras con gráficas diferentes, no sirve sólo usar las versiones modificadoras (con terminación `!`) de las funciones que usamos para graficar, pues esto da como resultado un montón de gráficas encimadas, como en el siguiente ejemplo:
 
 """
 
@@ -174,38 +200,36 @@ begin
 end
 
 # ╔═╡ f7930b26-809c-4e9c-9d81-865907305cc7
-md"""
-
-Lo que sí podemos hacer es asignarle cada una de estas gráficas a una variable diferente y luego llamar a la función `plot` con todas estas variables como argumento:
+md"""La forma correcta de crear una figura con varias subfiguras es primero asignando cada gráfica que queremos que aparezca como subfigura a una variable diferente y luego ejecutando la función `plot` con todas estas variables como argumento, como se muestra en las siguentes dos celdas de código:
 
 """
 
 # ╔═╡ 4d035f03-3368-4372-a6cb-ce8650ca75dd
-begin # Asignamos cada gráfica a una variable diferente.
+begin #Asignamos cada gráfica que queremos como subfigura a una variable diferente.
     p1 = scatter(X, [3,2,1], xerror = [0.1,0.1,0.3], yerror = ([0.5,0.4,0.35],[0.1,0.2,0.25]), legend=false )
 	p2 = boxplot( repeat([1,2,3,4,5],outer=100), rand(500), legend=false )
     p3 = bar([1,2,3],[4,5,6],fillcolor=[:red,:green,:blue],fillalpha=[0.2,0.4,0.6], legend=false)
-	p4 = histogram([1,2,1,1,4,3,8],bins=0:8, legend=false)
+	p4 = histogram([2.1, 2.2, 3, 4, 2, 5, 7, 5.5, 5.6], bins=0:9, legend=false)
 	p5 = pie(["Windows","Mac","GNU/Linux"],[18,2,4])
 	p6 = heatmap(rand(10,10))
 end
 
 # ╔═╡ d16103a7-6836-4342-b466-4e7fa67eba69
 plot(p1, p2, p3, p4, p5, p6)
-# Usamos las variables como argumento de la función plot.
+#Usamos las variables como argumento de la función plot.
 
 # ╔═╡ 664dbe12-8594-4550-9f3f-5241667ca7a4
 md""" ### _Layouts_
 
-Para ordenar la distribución de nuestras subfiguras dentro de una figura con muchas gráficas pordemos utilizar el macro @layout, como en el ejemplo siguiente:
+Para ordenar la distribución de nuestras subfiguras dentro de una figura con muchas gráficas pordemos utilizar el macro `@layout`, como en el ejemplo siguiente:
 
 """
 
 # ╔═╡ 49370c36-a59d-4520-986e-6337cde1ebf8
 l = @layout [a b c d ; e f]
-#= La matriz debe tener letras como entrada. ¡Cambia su
-   definición y reasigna la variable `l` para observar
-   cómo cambia la figura de abajo! =#
+#=La matriz debe tener letras como entrada. ¡Cambia su
+  definición y reasigna la variable `l` para observar
+  cómo cambia la figura de abajo!=#
 
 # ╔═╡ 292822e5-b30e-43c0-95ac-46295059476d
 plot(p1, p2, p3, p4, p5, p6, layout = l)
@@ -213,12 +237,12 @@ plot(p1, p2, p3, p4, p5, p6, layout = l)
 # ╔═╡ 9bad0e5e-5b4e-4548-b3b6-b021788c9366
 md"""## Guardar figuras con `savefig`
 
-Para guardar una figura, usamos la función `savefig(p,s)`, donde `p` es la gráfica que queremos guardar y `s` es un _string_ con el nombre del archivo, que puede tener terminación `.png` (del formato png para imágenes pixeladas) ó `.pdf` (del formato pdf para imágenes vectorizadas).
+Para guardar una figura, usamos la función `savefig(p,s)`, donde `p` es la gráfica que queremos guardar y `s` es un dato de tipo `String` con el nombre del archivo, que puede tener terminación `.png` (del formato png para imágenes pixeladas) ó `.pdf` (del formato pdf para imágenes vectorizadas).
 
 """
 
 # ╔═╡ 2ca2182d-ae1a-467d-af64-c78472ca6f00
-savefig(plot(p1, p2, p3, p4, p5, p6, layout = l), "myplot.png")
+savefig(plot(p1, p2, p3, p4, p5, p6, layout = l), "miFigura.pdf")
 
 # ╔═╡ d9b3cf32-a53b-4119-8d34-0dbe01addab7
 md"""
@@ -230,12 +254,11 @@ md"""
 # ╔═╡ 977c682f-6833-4156-85b7-9c6b4325fc4e
 md" ## Recursos complementarios
 
-* Repositorio de GitHub del paquete [`Pluto`](https://github.com/fonsp/Pluto.jl).
 * Documentación de [`Plots`](https://docs.juliaplots.org/stable/).
-* Documentación de las funciones de [`Plots`](https://docs.juliaplots.org/latest/api/)
 * Documentación de [atributos de series en `Plots`](https://docs.juliaplots.org/latest/generated/attributes_series/).
+* Tutorial de [backends de Plots](https://docs.juliaplots.org/latest/tutorial/#plotting-backends) en Julia.
 * Manual de [backends de Plots](https://docs.juliaplots.org/latest/backends/) en Julia.
-* Manual del paquete [`Measurements`](https://juliaphysics.github.io/Measurements.jl/stable/usage/).
+* Manual del paquete [`Measurements`](https://juliaphysics.github.io/Measurements.jl/stable/usage/), útil para trabajar con incertidumbres.
 "
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -253,8 +276,9 @@ StatsPlots = "~0.14.33"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.2"
+julia_version = "1.8.5"
 manifest_format = "2.0"
+project_hash = "37d92595355f3391ecfbdc1d38617e819160bbc4"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -270,6 +294,7 @@ version = "3.3.3"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+version = "1.1.1"
 
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
@@ -302,7 +327,7 @@ uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+0"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -352,6 +377,7 @@ version = "3.43.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "1.0.1+0"
 
 [[deps.Contour]]
 deps = ["StaticArrays"]
@@ -418,8 +444,9 @@ uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.8.6"
 
 [[deps.Downloads]]
-deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+version = "1.6.0"
 
 [[deps.EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -456,6 +483,9 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "c6033cc3892d0ef5bb9cd29b7f2f0331ea5184ea"
 uuid = "f5851436-0d7a-5f13-b9de-f02708fd171a"
 version = "3.3.10+0"
+
+[[deps.FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
@@ -654,10 +684,12 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+version = "0.6.3"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+version = "7.84.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -666,6 +698,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+version = "1.10.2+0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -696,9 +729,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -756,6 +789,7 @@ version = "1.0.3"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+version = "2.28.0+0"
 
 [[deps.Measures]]
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
@@ -773,6 +807,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+version = "2022.2.1"
 
 [[deps.MultivariateStats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI", "StatsBase"]
@@ -793,6 +828,7 @@ version = "0.4.10"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+version = "1.2.0"
 
 [[deps.Observables]]
 git-tree-sha1 = "fe29afdef3d0c4a8286128d4e45cc50621b1e43d"
@@ -814,10 +850,12 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+version = "0.3.20+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
+version = "0.8.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -869,6 +907,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "1.8.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -900,9 +939,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
+git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+1"
+version = "5.15.3+2"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -966,6 +1005,7 @@ version = "0.3.0+0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -1058,6 +1098,7 @@ uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+version = "1.0.0"
 
 [[deps.TableOperations]]
 deps = ["SentinelArrays", "Tables", "Test"]
@@ -1080,6 +1121,7 @@ version = "1.7.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+version = "1.10.1"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
@@ -1273,6 +1315,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+version = "1.2.12+3"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1289,6 +1332,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+version = "5.1.1+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1311,10 +1355,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+version = "1.48.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+version = "17.4.0+0"
 
 [[deps.x264_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1340,9 +1386,14 @@ version = "0.9.1+5"
 # ╟─59aabf72-b698-11ec-02c5-71c3f7918cd2
 # ╠═01262438-917e-43f0-81f1-a3d14d591891
 # ╟─6c4b8ea6-f01f-48a1-b2ad-9d16d634de81
+# ╠═bfacad82-4607-4b5a-a814-d26d6c9a6190
+# ╟─f38b4026-54da-4929-b86a-77381dc5d1ba
+# ╠═213565e7-70d3-45ce-bd33-dbb8113a7ae6
+# ╟─2be154bf-949f-4a79-b387-ec45452f98aa
 # ╠═388c5f8f-0bc8-4897-a312-7243000e2392
 # ╠═512964ef-af35-476b-8199-e9c9037ca419
 # ╠═c5948633-4440-4c1e-9771-8e3a0ae7717f
+# ╟─f0380540-489a-4978-918d-d73166f65de9
 # ╟─b5d5ffd3-10d7-40be-976b-c4ea5ecf96a1
 # ╠═cf834b28-119f-483b-8d2d-379b085c2d82
 # ╟─59bd58b0-9852-4ace-8419-3b0a3eff8ab4
@@ -1355,6 +1406,7 @@ version = "0.9.1+5"
 # ╠═094abf25-8e17-4f40-837c-082e59b19512
 # ╟─85fd570b-a212-4f6e-9288-6d190209152e
 # ╠═4d0558b2-f7b0-402f-899b-b07477083126
+# ╠═b2ad0cf1-4c57-4ea2-b970-03890b67275e
 # ╟─41cdba33-6d38-4c9a-ba36-31a929bf4e96
 # ╠═e8dcb3aa-20bd-4d5f-be64-62e38a6a1fe2
 # ╠═6eefbe35-5e13-4818-9935-ac9882ba8fb9
